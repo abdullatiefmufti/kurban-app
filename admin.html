@@ -3,32 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Konfirmasi Kurban</title>
+    <title>Admin - Validasi Kurban</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #e9ecef; }
+        .card { border-radius: 12px; border: none; }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container mt-5 mb-5">
+<body>
+    <div class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-primary text-white text-center py-3">
-                        <h4 class="mb-0">Konfirmasi Pembayaran</h4>
-                        <small>Admin Panel</small>
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-dark text-white p-3 text-center">
+                        <h4 class="mb-0">Validasi & Input Berat Hewan</h4>
                     </div>
                     <div class="card-body p-4">
                         <form id="adminForm">
                             <div class="mb-3">
                                 <label class="form-label fw-bold">ID QR / Nomor Kupon</label>
-                                <input type="text" name="id_pencarian" class="form-control" placeholder="Contoh: KPN-1234 atau QR-abcd" required>
-                                <div class="form-text">Masukkan kode dari data booking pekurban.</div>
+                                <input type="text" name="id_pencarian" class="form-control form-control-lg" placeholder="Contoh: KPN-1234" required autocomplete="off">
                             </div>
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Berat Hewan (Kg)</label>
-                                <input type="number" step="0.1" name="berat" class="form-control" placeholder="Contoh: 350.5" required>
+                                <input type="number" step="0.1" name="berat" class="form-control form-control-lg" placeholder="Masukkan berat..." required>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Konfirmasi & Lunas</button>
+                            <button type="submit" class="btn btn-primary w-100 py-2 fs-5 fw-bold" id="btnAdmin">Konfirmasi Status LUNAS</button>
                         </form>
-                        <div id="responseMessage" class="mt-3"></div>
                     </div>
                 </div>
             </div>
@@ -38,39 +41,33 @@
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzaiaFc87YfZK3WnLyZgRpyyv3wordLa42V375zUMtgB95onQM5q3iy9mFO9FNRaOOR/exec";
 
-        document.getElementById('adminForm').addEventListener('submit', function(e) {
+        document.getElementById('adminForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            data.action = "confirm_payment"; // Action khusus admin
+            const data = Object.fromEntries(new FormData(this).entries());
+            data.action = "confirm_payment";
 
-            const submitBtn = this.querySelector('button');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Memproses...";
+            const btn = document.getElementById('btnAdmin');
+            btn.disabled = true; btn.innerText = "Menyimpan Data...";
 
-            fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(data)
-            })
-            .then(res => res.json())
-            .then(res => {
-                const msg = document.getElementById('responseMessage');
-                if(res.status === "SUCCESS") {
-                    msg.innerHTML = `<div class="alert alert-success"><strong>✅ Berhasil!</strong><br>Status Lunas. Jatah: ${res.jatah} paket. Link QR Code telah disiapkan.</div>`;
-                    document.getElementById('adminForm').reset();
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if(result.status === "SUCCESS") {
+                    Swal.fire('Lunas!', `Data tervalidasi.\nSistem menetapkan jatah pekurban: ${result.jatah} paket.`, 'success');
+                    this.reset();
                 } else {
-                    msg.innerHTML = `<div class="alert alert-danger">⚠️ Gagal: ${res.message}</div>`;
+                    Swal.fire('Gagal', result.message, 'warning');
                 }
-            })
-            .catch(err => {
-                document.getElementById('responseMessage').innerHTML = `<div class="alert alert-danger">❌ Terjadi kesalahan jaringan.</div>`;
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Konfirmasi & Lunas";
-            });
+            } catch (err) {
+                Swal.fire('Koneksi Terputus', 'Gagal menghubungi server.', 'error');
+            } finally {
+                btn.disabled = false; btn.innerText = "Konfirmasi Status LUNAS";
+            }
         });
     </script>
 </body>

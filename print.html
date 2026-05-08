@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Cetak Label QR Tom & Jerry 121</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #eee; }
+        .no-print { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input, button { padding: 10px; font-size: 16px; margin: 5px; }
+        button { background: #0d6efd; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        
+        /* Area khusus kertas cetak */
+        #printArea { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2mm; background: white; width: 100%; max-width: 800px; padding: 5mm; }
+        
+        /* Desain per stiker T&J 121 (estimasi 38mm x 75mm) */
+        .sticker { border: 1px dashed #ccc; width: 75mm; height: 38mm; display: flex; flex-direction: column; justify-content: center; align-items: center; page-break-inside: avoid; }
+        .sticker canvas { max-height: 25mm; max-width: 25mm; }
+        .sticker-text { font-size: 12px; margin-top: 5px; font-weight: bold; text-align: center; }
+
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .no-print { display: none !important; }
+            #printArea { padding: 0; border: none; }
+            .sticker { border: none; } /* Hilangkan garis bantu saat dicetak */
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <h3>Generator Kupon QR Kurban</h3>
+        <p>Masukkan ID QR atau Nomor Kupon untuk membuat label. Gunakan spasi untuk multiple kupon.</p>
+        <input type="text" id="qrData" placeholder="QR-abcd KPN-1234 ..." style="width: 300px;">
+        <button onclick="generateLabels()">Buat Label</button>
+        <button onclick="window.print()" style="background:#198754;">Cetak (Print)</button>
+    </div>
+
+    <div id="printArea">
+        </div>
+
+    <script>
+        function generateLabels() {
+            const input = document.getElementById('qrData').value;
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = ''; // Kosongkan area
+            
+            const codes = input.split(' ').filter(c => c.trim() !== '');
+            
+            codes.forEach(code => {
+                // Buat container stiker
+                const stickerDiv = document.createElement('div');
+                stickerDiv.className = 'sticker';
+                
+                // Buat div penampung QR
+                const qrDiv = document.createElement('div');
+                new QRCode(qrDiv, { text: code, width: 90, height: 90, correctLevel : QRCode.CorrectLevel.M });
+                
+                // Teks No Kupon di bawahnya
+                const textDiv = document.createElement('div');
+                textDiv.className = 'sticker-text';
+                textDiv.innerText = code;
+                
+                stickerDiv.appendChild(qrDiv);
+                stickerDiv.appendChild(textDiv);
+                printArea.appendChild(stickerDiv);
+            });
+        }
+    </script>
+</body>
+</html>
